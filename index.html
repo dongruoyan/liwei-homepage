@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>董利伟 · 控制算法工程师</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230E1F33'/%3E%3Ctext x='32' y='46' font-size='38' text-anchor='middle' fill='%23E89B2F' font-family='PingFang SC, sans-serif'%3E董%3C/text%3E%3C/svg%3E">
+<style>
+/* ===== 设计令牌 ===== */
+:root{
+  --ink:#0E1F33;
+  --ink-2:#14304F;
+  --paper:#F5F8FB;
+  --panel:#FFFFFF;
+  --line:#DCE4EC;
+  --line-soft:#E9EEF3;
+  --accent:#E89B2F;
+  --accent-deep:#C87E16;
+  --slate:#5A6B7E;
+  --nav-h:68px;
+  --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  --mono:"SF Mono","Menlo","Consolas","Roboto Mono",monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.7;-webkit-font-smoothing:antialiased}
+section{scroll-margin-top:calc(var(--nav-h) + 12px)}
+.view:not(.active){display:none}
+.view.active{display:block}
+.view.active.hero{display:flex}
+.v-full{min-height:100vh}
+a{color:inherit;text-decoration:none}
+ul{list-style:none}
+
+/* ===== 顶部导航 ===== */
+.nav{
+  position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:50;
+  background:rgba(14,31,51,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.nav-inner{max-width:1120px;height:100%;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:20px}
+.brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.brand-name{font-size:18px;font-weight:700;color:#fff;letter-spacing:.06em}
+.brand-role{font-size:12px;color:#9FB2C8;letter-spacing:.12em}
+.nav-links{display:flex;align-items:center;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-links a{
+  position:relative;padding:8px 12px;font-size:14px;color:#C8D5E4;white-space:nowrap;
+  border-radius:6px;transition:color .2s;
+}
+.nav-links a::after{
+  content:"";position:absolute;left:12px;right:12px;bottom:2px;height:2px;border-radius:2px;
+  background:var(--accent);transform:scaleX(0);transform-origin:center;transition:transform .25s;
+}
+.nav-links a:hover{color:#fff}
+.nav-links a.active{color:#fff}
+.nav-links a.active::after{transform:scaleX(1)}
+.nav-tag{
+  font-family:var(--mono);font-size:11px;color:#E89B2F;border:1px solid rgba(232,155,47,.5);
+  padding:4px 10px;border-radius:20px;white-space:nowrap;
+}
+
+/* ===== Hero ===== */
+.hero{
+  position:relative;background:var(--ink);color:#fff;overflow:hidden;
+  min-height:92vh;display:flex;align-items:center;
+}
+.hero-grid-bg{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:56px 56px;
+}
+.hero-scope{position:absolute;right:-40px;top:50%;transform:translateY(-50%);width:46vw;max-width:560px;opacity:.9;pointer-events:none}
+.hero-inner{position:relative;z-index:2;max-width:1120px;margin:0 auto;padding:120px 24px 96px;width:100%}
+.kicker{
+  display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;
+  letter-spacing:.2em;color:var(--accent);margin-bottom:22px;
+}
+.kicker::before{content:"";width:34px;height:1px;background:var(--accent)}
+.hero h1{font-size:clamp(28px,4.6vw,48px);font-weight:800;line-height:1.12;letter-spacing:.02em}
+.hero h1 .accent{color:var(--accent)}
+.hero-sub{font-size:clamp(16px,2.2vw,20px);color:#B9C9DA;margin-top:14px;font-weight:500}
+.hero-desc{max-width:620px;color:#8FA6BC;margin-top:22px;font-size:15px}
+.hero-cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:34px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:8px;
+  font-size:15px;font-weight:600;transition:transform .18s,background .2s,box-shadow .2s;cursor:pointer;border:none;
+}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:var(--accent);color:#10202F}
+.btn-primary:hover{background:#F2AC4A;box-shadow:0 8px 24px rgba(232,155,47,.3)}
+.btn-ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.28)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:40px}
+.chip{
+  font-size:13px;color:#C8D5E4;border:1px solid rgba(255,255,255,.16);
+  padding:7px 14px;border-radius:24px;background:rgba(255,255,255,.05);
+  font-family:var(--mono);letter-spacing:.02em;
+}
+.scroll-hint{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);color:#6E84A0;font-family:var(--mono);font-size:12px;letter-spacing:.08em}
+
+/* ===== 通用段落 ===== */
+.section{padding:92px 24px}
+.section-inner{max-width:1120px;margin:0 auto}
+.sec-head{display:flex;align-items:flex-end;gap:18px;margin-bottom:44px}
+.sec-bar{width:5px;height:40px;border-radius:3px;background:var(--accent);flex-shrink:0}
+.sec-title{font-size:clamp(26px,3.4vw,34px);font-weight:800;letter-spacing:.04em}
+.sec-note{font-family:var(--mono);font-size:13px;color:var(--slate);margin-left:auto;white-space:nowrap;letter-spacing:.06em}
+
+/* ===== 个人简介 ===== */
+.about{background:var(--paper)}
+.about-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:44px}
+.about-text p{font-size:15.5px;color:#33465A;margin-bottom:16px;max-width:640px}
+.about-text strong{color:var(--ink)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
+.stat{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 18px;
+  display:flex;flex-direction:column;gap:6px;transition:border-color .2s,transform .2s;
+}
+.stat:hover{border-color:var(--accent);transform:translateY(-2px)}
+.stat-num{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--accent-deep)}
+.stat-label{font-size:13px;color:var(--slate)}
+
+/* ===== 经历时间轴 ===== */
+.experience{background:#EDF2F7}
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-item{
+  display:grid;grid-template-columns:150px 34px 1fr;padding-bottom:34px;position:relative;
+}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";position:absolute;left:calc(150px + 16px);top:10px;bottom:-6px;width:2px;
+  background:linear-gradient(#B9CCDD,#DCE4EC);
+}
+.tl-item:last-child::before{display:none}
+.tl-time{font-family:var(--mono);font-size:13px;color:var(--slate);padding-top:4px;letter-spacing:.02em}
+.tl-dot{
+  width:14px;height:14px;border-radius:50%;background:var(--paper);border:3px solid var(--accent);
+  justify-self:center;margin-top:5px;z-index:1;
+}
+.tl-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 22px;
+  margin-right:8px;transition:border-color .2s,box-shadow .2s;
+}
+.tl-card:hover{border-color:var(--accent);box-shadow:0 10px 26px rgba(14,31,51,.08)}
+.tl-name{font-size:16.5px;font-weight:700;display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.tl-org{
+  font-size:12px;font-weight:500;color:#fff;background:var(--ink-2);padding:3px 10px;border-radius:20px;
+  letter-spacing:.06em;
+}
+.tl-sub{font-size:13.5px;color:var(--slate);margin-top:6px}
+
+/* ===== 项目经历 ===== */
+.projects{background:var(--paper)}
+.proj-list{display:flex;flex-direction:column;gap:20px}
+.proj{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px 30px;
+  transition:border-color .2s,box-shadow .2s,transform .2s;
+}
+.proj:hover{border-color:var(--accent);box-shadow:0 14px 34px rgba(14,31,51,.09);transform:translateY(-3px)}
+.proj-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}
+.proj-title{font-size:18px;font-weight:700;letter-spacing:.03em}
+.proj-date{font-family:var(--mono);font-size:12.5px;color:var(--slate);background:#EFF3F7;padding:5px 12px;border-radius:20px;white-space:nowrap}
+.proj-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.proj-tag{font-size:12px;color:var(--accent-deep);background:rgba(232,155,47,.1);border:1px solid rgba(232,155,47,.3);padding:3px 10px;border-radius:20px;font-family:var(--mono)}
+.proj ul{display:flex;flex-direction:column;gap:7px}
+.proj li{position:relative;padding-left:20px;font-size:14.5px;color:#33465A}
+.proj li::before{content:"";position:absolute;left:4px;top:10px;width:6px;height:6px;border-radius:2px;background:var(--accent);transform:rotate(45deg)}
+
+/* ===== 专业技能 ===== */
+.skills{background:#EDF2F7}
+.skill-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.skill-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px 28px}
+.skill-name{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.skill-name svg{flex-shrink:0}
+.skill-body{font-size:14.5px;color:#33465A;line-height:2}
+.skill-body b{font-weight:600}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.skill-chip{font-size:13px;font-family:var(--mono);color:var(--ink);background:#F0F4F8;border:1px solid var(--line);padding:6px 12px;border-radius:8px}
+
+/* ===== 联系方式 ===== */
+.contact{background:var(--ink);color:#fff;position:relative;overflow:hidden}
+.contact .sec-bar{background:var(--accent)}
+.contact .sec-title{color:#fff}
+.contact .sec-note{color:#8FA6BC}
+.contact-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:44px}
+.contact-lead{font-size:15.5px;color:#B9C9DA;max-width:560px;margin-bottom:30px}
+.contact-items{display:flex;flex-direction:column;gap:14px}
+.c-item{
+  display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:16px 20px;
+  transition:border-color .2s,background .2s;
+}
+.c-item:hover{border-color:var(--accent);background:rgba(255,255,255,.08)}
+.c-ico{width:38px;height:38px;border-radius:9px;background:rgba(232,155,47,.16);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.c-label{font-size:12px;color:#8FA6BC}
+.c-value{font-size:16px;font-weight:600;color:#fff;letter-spacing:.02em;word-break:break-all}
+.c-action{font-family:var(--mono);font-size:13px;color:var(--accent);margin-left:auto;white-space:nowrap;display:inline-flex;gap:6px;align-items:center}
+.contact-side{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:14px;
+  padding:30px;align-self:start;
+}
+.side-title{font-size:14px;color:#B9C9DA;margin-bottom:14px;letter-spacing:.1em}
+.side-list{display:flex;flex-direction:column;gap:12px}
+.side-item{display:flex;flex-direction:column;gap:4px}
+.side-key{font-size:12px;color:#8FA6BC}
+.side-val{font-size:14.5px;font-weight:600}
+
+/* ===== 页脚 ===== */
+.footer{background:#0A1726;color:#6E84A0;padding:30px 24px;border-top:1px solid rgba(255,255,255,.06)}
+.footer-inner{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px}
+.footer .dot{width:3px;height:3px;border-radius:50%;background:#43536A}
+
+/* ===== 返回顶部 ===== */
+.to-top{
+  position:fixed;right:26px;bottom:30px;z-index:60;width:46px;height:46px;border-radius:50%;
+  background:var(--accent);color:#10202F;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 10px 24px rgba(14,31,51,.25);opacity:0;visibility:hidden;transform:translateY(10px);
+  transition:opacity .25s,transform .25s,visibility .25s;
+}
+.to-top.show{opacity:1;visibility:visible;transform:translateY(0)}
+.to-top:hover{background:#F2AC4A}
+
+/* ===== 轻量入场 ===== */
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* ===== Toast ===== */
+.toast{
+  position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);z-index:80;
+  background:var(--ink);color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;visibility:hidden;transition:opacity .25s,transform .25s,visibility .25s;
+}
+.toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+
+/* ===== 响应式 ===== */
+@media (max-width:900px){
+  .hero-scope{width:70vw;right:-30vw;opacity:.7}
+  .about-grid,.contact-grid{grid-template-columns:1fr;gap:32px}
+  .skill-grid{grid-template-columns:1fr}
+  .proj{padding:24px 22px}
+}
+@media (max-width:640px){
+  .nav-tag{display:none}
+  .brand-role{display:none}
+  .section{padding:64px 18px}
+  .sec-head{flex-wrap:wrap;gap:12px}
+  .sec-note{margin-left:0;width:100%}
+  .tl-item{grid-template-columns:22px 1fr}
+  .tl-item::before{left:10px}
+  .tl-time{grid-column:2;font-size:12px;margin-bottom:6px;color:var(--accent-deep)}
+  .tl-dot{grid-row:1 / span 2;justify-self:center;margin-top:2px}
+  .tl-card{margin-right:0}
+  .proj-head{flex-direction:column;gap:8px}
+  .hero-inner{padding:110px 20px 80px}
+  .stats{grid-template-columns:1fr}
+  .to-top{right:16px;bottom:20px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 顶部导航 ===== -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="#home" class="brand">
+      <span class="brand-name">董利伟</span>
+      <span class="brand-role">CONTROL ALGORITHM ENGINEER</span>
+    </a>
+    <nav class="nav-links" aria-label="页面导航">
+      <a href="#home" class="active">首页</a>
+      <a href="#about">个人简介</a>
+      <a href="#experience">工作经历</a>
+      <a href="#projects">项目经历</a>
+      <a href="#skills">专业技能</a>
+      <a href="#contact">联系我</a>
+    </nav>
+    <span class="nav-tag">车辆动力学 / 机器人控制</span>
+  </div>
+</header>
+
+<!-- ===== Hero ===== -->
+<section class="view hero" id="home">
+  <div class="hero-grid-bg" aria-hidden="true"></div>
+  <svg class="hero-scope" viewBox="0 0 560 260" fill="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="pathGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#E89B2F" stop-opacity="0"/>
+        <stop offset=".35" stop-color="#E89B2F" stop-opacity="1"/>
+        <stop offset="1" stop-color="#F2AC4A" stop-opacity="1"/>
+      </linearGradient>
+    </defs>
+    <g stroke="rgba(255,255,255,.14)" stroke-width="1">
+      <line x1="20" y1="60" x2="540" y2="60"/>
+      <line x1="20" y1="130" x2="540" y2="130"/>
+      <line x1="20" y1="200" x2="540" y2="200"/>
+    </g>
+    <line x1="20" y1="130" x2="540" y2="130" stroke="rgba(255,255,255,.35)" stroke-width="1" stroke-dasharray="7 7"/>
+    <path d="M20 190 C 130 188, 160 120, 250 118 S 400 60, 540 58" stroke="url(#pathGrad)" stroke-width="2.5" stroke-linecap="round" class="trace"/>
+    <circle cx="540" cy="58" r="5" fill="#E89B2F"/>
+    <text x="20" y="232" fill="rgba(255,255,255,.45)" font-family="Menlo, monospace" font-size="11">LATERAL POSITION / m</text>
+    <text x="540" y="232" fill="rgba(255,255,255,.45)" font-family="Menlo, monospace" font-size="11" text-anchor="end">TIME / s</text>
+  </svg>
+  <div class="hero-inner">
+    <div class="kicker">目标岗位 · 车辆动力学控制 / 机器人控制</div>
+    <h1>董利伟</h1>
+    <p class="hero-sub">控制算法工程师 · 十年工程与研发经验</p>
+    <p class="hero-desc">聚焦车辆动力学控制、机器人运动学 / 动力学、状态估计与参数辨识，具备 LQR 车辆横向控制的实车标定落地经验，以及机械臂、人形机器人的运动控制算法开发能力。</p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn btn-primary">查看项目经历</a>
+      <a href="#contact" class="btn btn-ghost">联系我</a>
+    </div>
+    <div class="hero-meta">
+      <span class="chip">C++ / Python / ROS</span>
+      <span class="chip">雅思 7.5</span>
+      <span class="chip">哈工大 · 机械电子硕士</span>
+    </div>
+  </div>
+  <div class="scroll-hint">点击上方导航切换板块</div>
+</section>
+
+<!-- ===== 个人简介 ===== -->
+<section class="view v-full section about" id="about">
+  <div class="section-inner">
+    <div class="sec-head reveal">
+      <span class="sec-bar"></span>
+      <h2 class="sec-title">个人简介</h2>
+      <span class="sec-note">PROFILE</span>
+    </div>
+    <div class="about-grid">
+      <div class="about-text reveal">
+        <p>哈尔滨工业大学机械电子工程硕士，大连理工大学机械工程本科。先后就职于中国航发动力所、可以科技有限公司，现于比亚迪第五事业部任<strong>控制算法工程师</strong>。</p>
+        <p>既有航空发动机结构设计的工程落地背景，又有多年的车辆与机器人控制算法研发经验：主导开发 LQR 车辆横向控制器并完成实车标定，算法已匹配比亚迪多款车型；主持机械臂运动学、动力学控制、负载辨识与拖动示教算法开发；参与双足人形机器人状态估计与人形机器人算法研发。</p>
+        <p>技术底色是<strong>模型驱动的控制</strong>——基于动力学 / 运动学模型做控制器设计、观测器与状态估计，并用实车标定、仿真闭环验证来保证工程可靠性。</p>
+      </div>
+      <div class="stats reveal">
+        <div class="stat">
+          <span class="stat-num">10年+</span>
+          <span class="stat-label">工程与研发经验（2016 至今）</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">2所高校</span>
+          <span class="stat-label">哈工大硕士 · 大工本科</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">3段经历</span>
+          <span class="stat-label">航发设计 · 机器人 · 汽车电子</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">7.5</span>
+          <span class="stat-label">雅思 · 英语工作能力</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 工作经历 ===== -->
+<section class="view v-full section experience" id="experience">
+  <div class="section-inner">
+    <div class="sec-head reveal">
+      <span class="sec-bar"></span>
+      <h2 class="sec-title">工作与教育经历</h2>
+      <span class="sec-note">EXPERIENCE · 2010 — 至今</span>
+    </div>
+    <div class="timeline">
+      <div class="tl-item reveal">
+        <div class="tl-time">2022.12 — 至今</div>
+        <div class="tl-dot"></div>
+        <div class="tl-card">
+          <div class="tl-name">控制算法工程师 <span class="tl-org">比亚迪 · 第五事业部</span></div>
+          <p class="tl-sub">车辆横向控制算法、非线性动力学观测器设计与实车标定；机械臂与人形机器人运动控制算法研发。</p>
+        </div>
+      </div>
+      <div class="tl-item reveal">
+        <div class="tl-time">2022.04 — 2022.08</div>
+        <div class="tl-dot"></div>
+        <div class="tl-card">
+          <div class="tl-name">控制算法工程师 <span class="tl-org">可以科技有限公司</span></div>
+          <p class="tl-sub">消费级移动机器人姿态估计与传感器融合算法开发。</p>
+        </div>
+      </div>
+      <div class="tl-item reveal">
+        <div class="tl-time">2016.07 — 2020.04</div>
+        <div class="tl-dot"></div>
+        <div class="tl-card">
+          <div class="tl-name">机械设计工程师 <span class="tl-org">中国航发动力所</span></div>
+          <p class="tl-sub">航空发动机中央传动组件结构设计与试验；作为主试验员完成集团对研究所的考核试验并获得所级奖励。</p>
+        </div>
+      </div>
+      <div class="tl-item reveal">
+        <div class="tl-time">2014.09 — 2016.07</div>
+        <div class="tl-dot"></div>
+        <div class="tl-card">
+          <div class="tl-name">机械电子工程 · 硕士 <span class="tl-org">哈尔滨工业大学</span></div>
+          <p class="tl-sub">机械电子工程方向，硕士学历。</p>
+        </div>
+      </div>
+      <div class="tl-item reveal">
+        <div class="tl-time">2010.09 — 2014.06</div>
+        <div class="tl-dot"></div>
+        <div class="tl-card">
+          <div class="tl-name">机械工程 · 本科 <span class="tl-org">大连理工大学</span></div>
+          <p class="tl-sub">机械工程专业，本科学历。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 项目经历 ===== -->
+<section class="view section projects" id="projects">
+  <div class="section-inner">
+    <div class="sec-head reveal">
+      <span class="sec-bar"></span>
+      <h2 class="sec-title">项目经历</h2>
+      <span class="sec-note">PROJECTS · 7 项</span>
+    </div>
+    <div class="proj-list">
+
+      <article class="proj reveal">
+        <div class="proj-head">
+          <h3 class="proj-title">机械臂运动学算法开发</h3>
+          <span class="proj-date">2026.02 — 至今</span>
+        </div>
+        <div class="proj-tags">
+          <span class="proj-tag">运动学</span><span class="proj-tag">轨迹规划</span><span class="proj-tag">动态随动点胶</span>
+        </div>
+        <ul>
+          <li>开发机械臂雅可比、位姿正解、位姿数值逆解、速度逆解、奇异性分析。</li>
+          <li>产线点胶应用下，机械臂末端工具轨迹规划，生成速度连续的平滑点胶轨迹。</li>
+          <li>控制机械臂实现对运动工件的动态随动点胶。</li>
+        </ul>
+      </article>
+
+      <article class="proj reveal">
+        <div class="proj-head">
+          <h3 class="proj-title">机械臂运动控制与负载辨识</h3>
+          <span class="proj-date">2025.08 — 至今</span>
+        </div>
+        <div class="proj-tags">
+          <span class="proj-tag">动力学控制</span><span class="proj-tag">导纳控制</span><span class="proj-tag">六维力传感器</span><span class="proj-tag">参数辨识</span>
+        </div>
+        <ul>
+          <li>在控制末端位姿设定点的目标下，基于动力学控制进行机械臂重力补偿。</li>
+          <li>利用末端六维力传感器和导纳控制实现笛卡尔空间机械臂拖动示教算法。</li>
+          <li>开发七自由度冗余机械臂速度逆解、七自由度冗余机械臂末端导纳拖动算法。</li>
+          <li>为提高辨识精度，设计机械臂关节角度和电机力矩的频域滤波方案。</li>
+          <li>采集机械臂关节和末端六维力传感器数据，对机械臂末端夹具进行重心辨识和补偿。</li>
+          <li>基于运动学，对由于连杆参数误差、连杆变形累积传递引起的末端位姿误差进行控制补偿。</li>
+        </ul>
+      </article>
+
+      <article class="proj reveal">
+        <div class="proj-head">
+          <h3 class="proj-title">双足人形机器人算法开发</h3>
+          <span class="proj-date">2025.03 — 2025.10</span>
+        </div>
+        <div class="proj-tags">
+          <span class="proj-tag">人形机器人</span><span class="proj-tag">正运动学</span><span class="proj-tag">状态估计</span>
+        </div>
+        <ul>
+          <li>踝关节 2 自由度并联机构正运动学的数值求解。</li>
+          <li>对 IMU 和关节编码器进行数据融合做状态估计，估计机器人质心位置和速度。</li>
+        </ul>
+      </article>
+
+      <article class="proj reveal">
+        <div class="proj-head">
+          <h3 class="proj-title">车辆横向控制器、非线性动力学观测器设计</h3>
+          <span class="proj-date">2023.08 — 2024.09</span>
+        </div>
+        <div class="proj-tags">
+          <span class="proj-tag">LQR</span><span class="proj-tag">EKF</span><span class="proj-tag">实车标定</span><span class="proj-tag">状态观测器</span>
+        </div>
+        <ul>
+          <li>主导开发 LQR 车辆横向控制器，实现算法设计与实车标定。</li>
+          <li>基于车辆运动学跟踪误差模型完成控制器代码实现与优化，确定关键数值迭代与退出条件。</li>
+          <li>完成实车信号滤波与参数标定，算法已匹配 BYD 多款车型，显著提升车道保持性能。</li>
+          <li>基于非线性车辆动力学，利用 EKF，在 MATLAB / Carsim 平台完成车辆侧偏角度、轮胎侧偏刚度、道路倾角的在线联合状态估计算法设计与闭环验证；仿真中侧偏角估计误差在 0.1° 以内，道路倾角（roll）估计误差在 0.3° 以内；观测器尚未进行实车验证。</li>
+          <li>观测状态与参数：车辆横向速度、横摆角速度、车辆侧偏角、前后轮侧偏刚度、道路倾角。</li>
+        </ul>
+      </article>
+
+      <article class="proj reveal">
+        <div class="proj-head">
+          <h3 class="proj-title">基于 CARLA 的端到端自动驾驶算法开发及仿真</h3>
+          <span class="proj-date">2024.08 — 2024.12</span>
+        </div>
+        <div class="proj-tags">
+          <span class="proj-tag">CARLA</span><span class="proj-tag">PPO</span><span class="proj-tag">端到端自动驾驶</span>
+        </div>
+        <ul>
+          <li>CARLA 仿真器环境部署、设置，PPO 深度强化学习策略的 Python 接口编写。</li>
+          <li>研究开源端到端自动驾驶框架（如 DiffusionDrive），探索大模型在自动驾驶领域的应用和微调。</li>
+        </ul>
+      </article>
+
+      <article class="proj reveal">
+        <div class="proj-head">
+          <h3 class="proj-title">消费级移动机器人姿态估计与传感器融合</h3>
+          <span class="proj-date">2022.04 — 2022.08</span>
+        </div>
+        <div class="proj-tags">
+          <span class="proj-tag">IMU</span><span class="proj-tag">姿态解算</span><span class="proj-tag">传感器标定</span>
+        </div>
+        <ul>
+          <li>设计并实现九轴 IMU 数据融合与姿态解算算法，结合 FFT 分析和数字滤波，有效抑制高动态运动噪声。</li>
+          <li>完成 IMU 传感器标定，构建最小二乘方法代价函数进行优化，标定与解算精度满足项目需求。</li>
+        </ul>
+      </article>
+
+      <article class="proj reveal">
+        <div class="proj-head">
+          <h3 class="proj-title">航空发动机中央传动组件设计和试验</h3>
+          <span class="proj-date">2016.07 — 2020.04</span>
+        </div>
+        <div class="proj-tags">
+          <span class="proj-tag">结构设计</span><span class="proj-tag">强度校核</span><span class="proj-tag">试验验证</span>
+        </div>
+        <ul>
+          <li>负责核心零组件的结构设计、强度校核，积累了结构设计经验和工程落地能力。</li>
+          <li>作为主试验员，负责并完成一项集团对所在研究所的考核试验，获得所级奖励。</li>
+        </ul>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== 专业技能 ===== -->
+<section class="view v-full section skills" id="skills">
+  <div class="section-inner">
+    <div class="sec-head reveal">
+      <span class="sec-bar"></span>
+      <h2 class="sec-title">专业技能</h2>
+      <span class="sec-note">SKILLS & TOOLS</span>
+    </div>
+    <div class="skill-grid">
+      <div class="skill-card reveal">
+        <div class="skill-name">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E89B2F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
+          关注方向
+        </div>
+        <div class="chip-row">
+          <span class="skill-chip">车辆动力学</span>
+          <span class="skill-chip">机器人运动学 / 动力学</span>
+          <span class="skill-chip">观测器</span>
+          <span class="skill-chip">状态估计</span>
+          <span class="skill-chip">参数辨识</span>
+        </div>
+      </div>
+      <div class="skill-card reveal">
+        <div class="skill-name">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E89B2F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 6-6 6 6 6"/><path d="m16 6 6 6-6 6"/></svg>
+          编程语言和工具
+        </div>
+        <div class="chip-row">
+          <span class="skill-chip">C++（Eigen · KDL · Pinocchio）</span>
+          <span class="skill-chip">Python</span>
+          <span class="skill-chip">Ipopt</span>
+          <span class="skill-chip">MuJoCo</span>
+          <span class="skill-chip">ROS</span>
+        </div>
+      </div>
+      <div class="skill-card reveal">
+        <div class="skill-name">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E89B2F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.7 2.6 4 5.7 4 9s-1.3 6.4-4 9c-2.7-2.6-4-5.7-4-9s1.3-6.4 4-9z"/></svg>
+          外语能力
+        </div>
+        <p class="skill-body"><b>雅思 7.5</b>，具备英语工作与沟通能力。</p>
+      </div>
+      <div class="skill-card reveal">
+        <div class="skill-name">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E89B2F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          车辆 / 机器人工程
+        </div>
+        <div class="chip-row">
+          <span class="skill-chip">CANoe / CANape</span>
+          <span class="skill-chip">Carsim</span>
+          <span class="skill-chip">实车标定</span>
+          <span class="skill-chip">多体动力学仿真</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 联系方式 ===== -->
+<section class="view v-full section contact" id="contact">
+  <div class="section-inner">
+    <div class="sec-head reveal">
+      <span class="sec-bar"></span>
+      <h2 class="sec-title">联系方式</h2>
+      <span class="sec-note">GET IN TOUCH</span>
+    </div>
+    <div class="contact-grid">
+      <div>
+        <p class="contact-lead reveal">如果您有车辆动力学控制、机器人运动控制方向的岗位机会或技术合作，欢迎直接联系。我目前关注方向：车辆动力学、机器人运动学 / 动力学、观测器、状态估计、参数辨识。</p>
+        <div class="contact-items reveal">
+          <a class="c-item" href="tel:+8615242409733">
+            <span class="c-ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E89B2F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </span>
+            <span>
+              <span class="c-label">电话</span>
+              <span class="c-value">(+86) 15242409733</span>
+            </span>
+            <span class="c-action">拨打 →</span>
+          </a>
+          <a class="c-item" href="mailto:ruoyan1991@gmail.com">
+            <span class="c-ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E89B2F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6L22 7"/></svg>
+            </span>
+            <span>
+              <span class="c-label">邮箱</span>
+              <span class="c-value">ruoyan1991@gmail.com</span>
+            </span>
+            <span class="c-action">发邮件 →</span>
+          </a>
+          <div class="c-item" style="cursor:pointer" id="copy-email">
+            <span class="c-ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E89B2F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </span>
+            <span>
+              <span class="c-label">复制邮箱</span>
+              <span class="c-value">ruoyan1991@gmail.com</span>
+            </span>
+            <span class="c-action">一键复制 →</span>
+          </div>
+        </div>
+      </div>
+      <aside class="contact-side reveal">
+        <p class="side-title">应聘方向</p>
+        <div class="side-list">
+          <div class="side-item">
+            <span class="side-key">目标岗位</span>
+            <span class="side-val">车辆动力学控制 / 机器人控制</span>
+          </div>
+          <div class="side-item">
+            <span class="side-key">技术标签</span>
+            <span class="side-val">LQR · EKF · 导纳控制 · 状态估计 · 参数辨识</span>
+          </div>
+          <div class="side-item">
+            <span class="side-key">当前任职</span>
+            <span class="side-val">比亚迪 · 第五事业部 · 控制算法工程师</span>
+          </div>
+          <div class="side-item">
+            <span class="side-key">语言能力</span>
+            <span class="side-val">雅思 7.5</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>董利伟 · 控制算法工程师</span>
+      <span class="dot"></span>
+      <a href="mailto:ruoyan1991@gmail.com">ruoyan1991@gmail.com</a>
+      <span class="dot"></span>
+      <span>车辆动力学 · 机器人控制</span>
+    </div>
+  </footer>
+</section>
+
+<button class="to-top" id="toTop" aria-label="返回顶部">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10202F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+</button>
+
+<div class="toast" id="toast">邮箱已复制</div>
+
+<script>
+(function(){
+  // ===== 页内视图路由（hash 切换，一次只显示一个板块） =====
+  var views = document.querySelectorAll('.view');
+  var links = document.querySelectorAll('.nav-links a');
+  var toTop = document.getElementById('toTop');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var titles = {
+    home:'董利伟 · 控制算法工程师',
+    about:'个人简介 · 董利伟',
+    experience:'工作与教育经历 · 董利伟',
+    projects:'项目经历 · 董利伟',
+    skills:'专业技能 · 董利伟',
+    contact:'联系方式 · 董利伟'
+  };
+  var traceDone = false;
+
+  function currentId(){
+    var id = (location.hash || '').replace('#','');
+    return document.getElementById(id) ? id : 'home';
+  }
+  function activate(id){
+    views.forEach(function(v){ v.classList.toggle('active', v.id === id); });
+    links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#' + id); });
+    document.title = titles[id] || titles.home;
+    var cur = document.getElementById(id);
+    if (cur){
+      cur.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
+      if (id === 'home' && !traceDone){
+        traceDone = true;
+        var trace = cur.querySelector('.trace');
+        if (trace){
+          var len = trace.getTotalLength();
+          trace.style.strokeDasharray = len;
+          trace.style.strokeDashoffset = len;
+          trace.style.transition = 'stroke-dashoffset 2.2s ease .2s';
+          requestAnimationFrame(function(){
+            requestAnimationFrame(function(){ trace.style.strokeDashoffset = '0'; });
+          });
+        }
+      }
+    }
+    window.scrollTo(0, 0);
+    toTop.classList.remove('show');
+  }
+
+  window.addEventListener('hashchange', function(){ activate(currentId()); });
+  activate(currentId());
+
+  // ===== 返回顶部 =====
+  window.addEventListener('scroll', function(){
+    toTop.classList.toggle('show', window.scrollY > 600);
+  }, {passive:true});
+  toTop.addEventListener('click', function(){
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  // ===== 减少动态偏好：直接显示全部内容 =====
+  if (reduce){
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
+  }
+
+  // ===== 复制邮箱 =====
+  var copyBtn = document.getElementById('copy-email');
+  var toast = document.getElementById('toast');
+  var timer = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(timer);
+    timer = setTimeout(function(){ toast.classList.remove('show'); }, 1800);
+  }
+  copyBtn.addEventListener('click', function(){
+    var email = 'ruoyan1991@gmail.com';
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(email).then(function(){
+        showToast('邮箱已复制');
+      }, function(){ showToast('复制失败，请手动复制'); });
+    } else {
+      showToast('复制失败，请手动复制');
+    }
+  });
+
+  // Hero 轨迹绘制动画已并入视图切换逻辑（activate 内处理）
+})();
+</script>
+</body>
+</html>
