@@ -168,6 +168,13 @@ ul{list-style:none}
 .proj ul{display:flex;flex-direction:column;gap:7px}
 .proj li{position:relative;padding-left:20px;font-size:14.5px;color:#33465A}
 .proj li::before{content:"";position:absolute;left:4px;top:10px;width:6px;height:6px;border-radius:2px;background:var(--accent);transform:rotate(45deg)}
+.proj-video-label{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;color:var(--accent-deep);letter-spacing:.1em;margin-top:18px;margin-bottom:12px}
+.proj-video-label::before{content:"";width:16px;height:1px;background:var(--accent)}
+.proj-videos{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.pv-item{display:flex;flex-direction:column;gap:8px}
+.pv-item video{width:100%;max-width:300px;aspect-ratio:9/16;background:#0A1726;border-radius:10px;margin:0 auto;display:block;box-shadow:0 8px 20px rgba(14,31,51,.12)}
+.pv-cap{font-size:13px;color:var(--slate);text-align:center}
+@media (max-width:640px){.proj-videos{grid-template-columns:1fr}}
 
 /* ===== 专业技能 ===== */
 .skills{background:#EDF2F7}
@@ -456,6 +463,17 @@ ul{list-style:none}
           <li>采集机械臂关节和末端六维力传感器数据，对机械臂末端夹具进行重心辨识和补偿。</li>
           <li>基于运动学，对由于连杆参数误差、连杆变形累积传递引起的末端位姿误差进行控制补偿。</li>
         </ul>
+        <div class="proj-video-label">拖动示教演示</div>
+        <div class="proj-videos">
+          <div class="pv-item">
+            <video controls preload="metadata" playsinline src="videos/导纳拖动-位置.mp4"></video>
+            <p class="pv-cap">拖动示教 · 位置</p>
+          </div>
+          <div class="pv-item">
+            <video controls preload="metadata" playsinline src="videos/导纳拖动-姿态.mp4"></video>
+            <p class="pv-cap">拖动示教 · 姿态</p>
+          </div>
+        </div>
       </article>
 
       <article class="proj reveal">
